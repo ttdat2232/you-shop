@@ -1,0 +1,13 @@
+@host=http://localhost:8080
+@product_id=7d3498d1-1543-4d33-9373-a91543cfb34b
+GET {{host}}/api/v1/products/{{product_id}}
+
+###
+
+GET {{host}}/api/v1/products?page=1&page_size=1
+
+###
+
+GET {{host}}/api/v1/health
+
+###

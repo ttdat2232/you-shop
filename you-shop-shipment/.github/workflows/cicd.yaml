@@ -1,0 +1,66 @@
+name: CI/CD
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/README.md"
+      - "**/.gitignore"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**/README.md"
+      - "**/.gitignore"
+jobs:
+  ci-cd:
+    if: ${{ ! startsWith(github.event.head_commit.message, 'chore(release):') }}
+    name: ci-cd 
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            ref: main
+            token: ${{ secrets.TOKEN }}
+      - name: Increment Version
+        id: increment_version
+        run: |
+            VERSION=$(cat .version)
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+            # Only increment PATCH for this example. Modify for semantic versioning logic.
+            PATCH=$((PATCH + 1))
+            NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+
+            echo $NEW_VERSION > VERSION
+            echo "New version: $NEW_VERSION"
+            echo $NEW_VERSION > .version
+            echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        shell: bash
+      - name: Build and push Docker image to ECR
+        shell: bash
+        run: |
+            aws ecr get-login-password --region ap-southeast-1 | sudo docker login --username AWS --password-stdin 542049112079.dkr.ecr.ap-southeast-1.amazonaws.com
+            sudo docker build -t 542049112079.dkr.ecr.ap-southeast-1.amazonaws.com/ys-${{ github.event.repository.name }}:$NEW_VERSION .
+            sudo docker images
+            sudo docker push 542049112079.dkr.ecr.ap-southeast-1.amazonaws.com/ys-${{ github.event.repository.name }}:$NEW_VERSION
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-commit"
+          git config user.email "sondzvl129@gmail.com"
+          git add .version
+          git commit -am "chore(release): Sync dev to version ${{ env.NEW_VERSION }}"
+          git push origin main
+      - uses: actions/checkout@v4
+        with:
+          repository: TechwizsonORG/YS-services
+          ref: main
+          token: ${{ secrets.TOKEN }}
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-commit"
+          git config user.email "sondzvl129@gmail.com"
+          sed -i "s/image:.*/image: 542049112079.dkr.ecr.ap-southeast-1.amazonaws.com\/ys-${{ github.event.repository.name }}:${{ env.NEW_VERSION }}/" ${{ github.event.repository.name }}/deployment.yaml
+          git add ${{ github.event.repository.name }}/deployment.yaml
+          git commit -am "chore(release): Sync dev to version ${{ env.NEW_VERSION }}"
+          git push origin main 

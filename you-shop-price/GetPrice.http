@@ -1,0 +1,5 @@
+@host=http://localhost:8081
+
+GET {{host}}/api/v1/price
+
+###

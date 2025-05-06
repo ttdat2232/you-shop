@@ -1,0 +1,171 @@
+definitions:
+  auth.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.LoginResponse:
+    properties:
+      accessToken:
+        type: string
+      avatarUrl:
+        type: string
+      id:
+        type: string
+      refreshToken:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      phone_number:
+        type: string
+      username:
+        type: string
+    type: object
+  model.ApiResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      is_success:
+        type: boolean
+      message:
+        type: string
+    type: object
+  token.TokenType:
+    enum:
+    - 0
+    - 1
+    type: integer
+    x-enum-varnames:
+    - AccessToken
+    - RefreshToken
+  token.ValidateTokenRequest:
+    properties:
+      token:
+        type: string
+      type:
+        $ref: '#/definitions/token.TokenType'
+    type: object
+  user.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      scope:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: login model
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.LoginResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse'
+      summary: Login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: register model
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse'
+      summary: Register
+      tags:
+      - auth
+  /auth/token/validate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: login model
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/token.ValidateTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/user.UserResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse'
+      summary: Validate token
+      tags:
+      - token
+swagger: "2.0"

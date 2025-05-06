@@ -1,0 +1,177 @@
+definitions:
+  entity.PaymentStatus:
+    enum:
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - PaymentPending
+    - PaymentSuccess
+    - PaymentFailed
+  model.ApiResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      is_success:
+        type: boolean
+      message:
+        type: string
+    type: object
+  model.CreateOrder:
+    properties:
+      description:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/model.CreateOrderItem'
+        type: array
+    type: object
+  model.CreateOrderItem:
+    properties:
+      colorId:
+        type: string
+      productId:
+        type: string
+      quantity:
+        type: integer
+      sizeId:
+        type: string
+    type: object
+  model.ErrorResponse:
+    properties:
+      data: {}
+      detail:
+        type: string
+      instance:
+        type: string
+      status:
+        type: integer
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  payment.PaymentResponse:
+    properties:
+      amount:
+        type: number
+      id:
+        type: string
+      orderId:
+        type: string
+      status:
+        $ref: '#/definitions/entity.PaymentStatus'
+      userId:
+        type: string
+    type: object
+  payment.PaymentUrlResponse:
+    properties:
+      url:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /payments/user-payments:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/payment.PaymentResponse'
+                  type: array
+              type: object
+      summary: Get current user payments
+      tags:
+      - payments
+  /payments/vnpay/ipn:
+    get:
+      responses: {}
+      summary: Handle VnPay Callback IPN
+      tags:
+      - vnpay
+  /payments/vnpay/pay:
+    post:
+      consumes:
+      - application/json
+      description: Generate VnPay Payment URL and also creating order
+      parameters:
+      - description: Create Order Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrder'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/payment.PaymentUrlResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Generate VnPay Payment URL
+      tags:
+      - vnpay
+  /payments/vnpay/pay/:orderId:
+    get:
+      description: Regenerate VnPay Payment URL for existed payment via order Id
+      parameters:
+      - description: Order Id
+        in: query
+        name: orderId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/payment.PaymentUrlResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Regenerate VnPay Payment URL
+      tags:
+      - vnpay
+swagger: "2.0"

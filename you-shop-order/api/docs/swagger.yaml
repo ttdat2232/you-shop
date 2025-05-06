@@ -1,0 +1,283 @@
+definitions:
+  entity.OrderStatus:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    type: integer
+    x-enum-comments:
+      Canceled: The order canceled by the user or system
+      Completed: The order has been fully processed, delivered, and closed
+      Confirmed: Confirmed by the admin
+      Delivered: The order has been delivered
+      Failed: Payment failed or any other failure
+      OutForDelivery: The order is on its way to be delivered
+      Pending: Created but not yet processed
+      Processing: Being prepared or processed
+      Refunded: The order has been refunded to the customer
+      Returned: The order has been returned by the customer
+      Shipped: The order has been dispatched to the courier
+    x-enum-varnames:
+    - Pending
+    - Confirmed
+    - Processing
+    - Shipped
+    - OutForDelivery
+    - Delivered
+    - Refunded
+    - Returned
+    - Failed
+    - Canceled
+    - Completed
+  err.OrderError:
+    properties:
+      code:
+        type: integer
+      data: {}
+      detail:
+        type: string
+      title:
+        type: string
+    type: object
+  err.ValidationError:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/err.ValidationErrorField'
+        type: array
+      detail:
+        type: string
+      title:
+        type: string
+    type: object
+  err.ValidationErrorField:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  model.ApiResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      is_success:
+        type: boolean
+      message:
+        type: string
+    type: object
+  model.CreateOrder:
+    properties:
+      description:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/model.CreateOrderItem'
+        type: array
+    type: object
+  model.CreateOrderItem:
+    properties:
+      colorId:
+        type: string
+      productId:
+        type: string
+      quantity:
+        type: integer
+      sizeId:
+        type: string
+    type: object
+  order.Item:
+    properties:
+      price:
+        type: number
+      productId:
+        type: string
+      productName:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  order.Order:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/order.Item'
+        type: array
+      status:
+        $ref: '#/definitions/entity.OrderStatus'
+      totalPrice:
+        type: number
+    type: object
+  order.UpdateOrder:
+    properties:
+      description:
+        type: string
+      isCancel:
+        type: boolean
+    type: object
+info:
+  contact: {}
+paths:
+  /orders:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create order request body
+        in: body
+        name: createOrder
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrder'
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/err.OrderError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/err.OrderError'
+      summary: Create order
+      tags:
+      - orders
+  /orders/:id:
+    get:
+      consumes:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/order.Order'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/err.OrderError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/err.OrderError'
+      summary: Get order by Id
+      tags:
+      - orders
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create order request body
+        in: body
+        name: createOrder
+        required: true
+        schema:
+          $ref: '#/definitions/order.UpdateOrder'
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/order.Order'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/err.OrderError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/err.OrderError'
+      summary: Update order
+      tags:
+      - orders
+  /orders/admin/:id/confirm:
+    patch:
+      description: Confirm order by id
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/err.OrderError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/err.OrderError'
+      summary: Confirm order
+      tags:
+      - admin-orders
+  /orders/user-orders:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/order.Order'
+                  type: array
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/err.ValidationError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/err.OrderError'
+      summary: Get current user orders
+      tags:
+      - orders
+swagger: "2.0"

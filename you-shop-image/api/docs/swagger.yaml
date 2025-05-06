@@ -1,0 +1,179 @@
+definitions:
+  err.AppError:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+      title:
+        type: string
+    type: object
+  image.ImageResponse:
+    properties:
+      alt:
+        type: string
+      content_type:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+    type: object
+  model.ApiResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      is_success:
+        type: boolean
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /images/{id}:
+    delete:
+      parameters:
+      - description: 'Image ID in UUID format (e.g: 123e4567-e89b-12d3-a456-426614174000)'
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/err.AppError'
+              type: object
+      summary: Delete Image
+      tags:
+      - images
+    get:
+      parameters:
+      - description: 'Image ID in UUID format (e.g: 123e4567-e89b-12d3-a456-426614174000)'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - image/jpeg
+      - image/png
+      responses: {}
+      summary: Serve Image
+      tags:
+      - images
+  /images/banner:
+    delete:
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/err.AppError'
+              type: object
+      summary: Delete Banners
+      tags:
+      - images
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/image.ImageResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/err.AppError'
+              type: object
+      summary: Get Banners Data
+      tags:
+      - images
+  /images/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Image File
+        in: formData
+        name: image_file
+        required: true
+        type: file
+      - description: Image Alt
+        in: formData
+        name: alt
+        required: true
+        type: string
+      - description: Owner ID
+        in: formData
+        name: owner_id
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/err.AppError'
+              type: object
+        default:
+          description: ""
+      summary: Upload Image
+      tags:
+      - images
+  /images/upload/banner:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Banner Files
+        in: formData
+        name: banner_files
+        required: true
+        type: file
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ApiResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/err.AppError'
+              type: object
+      summary: Upload Banners
+      tags:
+      - images
+swagger: "2.0"
